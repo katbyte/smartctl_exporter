@@ -194,6 +194,15 @@ var (
 		},
 		nil,
 	)
+
+	// The rest of the NVMe health log. Each is left off for a drive that does not report it.
+	metricDeviceUnsafeShutdowns                = prometheus.NewDesc("smartctl_device_unsafe_shutdowns", "Number of times the controller lost power without being told to shut down first", []string{"device"}, nil)
+	metricDeviceControllerBusyTimeSeconds      = prometheus.NewDesc("smartctl_device_controller_busy_time_seconds", "Time the controller has spent busy with I/O commands", []string{"device"}, nil)
+	metricDeviceWarningTemperatureTimeSeconds  = prometheus.NewDesc("smartctl_device_warning_temperature_time_seconds", "Time the controller has spent at or above its warning composite temperature threshold", []string{"device"}, nil)
+	metricDeviceCriticalTemperatureTimeSeconds = prometheus.NewDesc("smartctl_device_critical_temperature_time_seconds", "Time the controller has spent at or above its critical composite temperature threshold", []string{"device"}, nil)
+	metricDeviceHostReadCommands               = prometheus.NewDesc("smartctl_device_host_read_commands", "Number of read commands the controller has completed", []string{"device"}, nil)
+	metricDeviceHostWriteCommands              = prometheus.NewDesc("smartctl_device_host_write_commands", "Number of write commands the controller has completed", []string{"device"}, nil)
+
 	metricDeviceBytesRead = prometheus.NewDesc(
 		"smartctl_device_bytes_read",
 		"",
