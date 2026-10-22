@@ -15,6 +15,8 @@ package main
 
 import (
 	"log/slog"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -80,5 +82,35 @@ func TestSCSIMetricDescriptorsRegistered(t *testing.T) {
 	}
 	for name := range want {
 		t.Errorf("missing SCSI metric %s", name)
+	}
+}
+
+// TestEverySavedDiskPassesStrictCheck runs each saved smartctl answer through the strict check the exporter serves its page with.
+// A reading left out of Describe fails that check, and with it the whole page, but only on a disk that reports the reading.
+func TestEverySavedDiskPassesStrictCheck(t *testing.T) {
+	files, err := filepath.Glob("testdata/*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, file := range files {
+		t.Run(filepath.Base(file), func(t *testing.T) {
+			data, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			device := Device{Name: "/dev/saved", Type: "auto", Label: "saved"}
+			jsonCache.Store(device, JSONCache{JSON: parseJSON(string(data)), LastCollect: time.Now().Add(time.Hour)})
+			t.Cleanup(func() { jsonCache.Delete(device) })
+
+			registry := prometheus.NewPedanticRegistry()
+			if err := registry.Register(&SMARTctlManagerCollector{Devices: []Device{device}, logger: slog.New(slog.DiscardHandler)}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := registry.Gather(); err != nil {
+				t.Error(err)
+			}
+		})
 	}
 }
