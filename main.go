@@ -80,6 +80,7 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricDeviceBytesWritten
 	ch <- metricDeviceSmartStatus
 	ch <- metricDeviceExitStatus
+	ch <- metricDeviceScrapeSuccess
 	ch <- metricDeviceState
 	ch <- metricDeviceStatistics
 	ch <- metricDeviceErrorLogCount
@@ -87,6 +88,7 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricDeviceSelfTestLogErrorCount
 	ch <- metricDeviceERCSeconds
 	ch <- metricSCSIGrownDefectList
+	ch <- metricSCSIUsedEnduranceIndicator
 	ch <- metricReadErrorsCorrectedByRereadsRewrites
 	ch <- metricReadErrorsCorrectedByEccFast
 	ch <- metricReadErrorsCorrectedByEccDelayed
@@ -95,6 +97,10 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricWriteErrorsCorrectedByEccFast
 	ch <- metricWriteErrorsCorrectedByEccDelayed
 	ch <- metricWriteTotalUncorrectedErrors
+	ch <- metricVerifyErrorsCorrectedByRereadsRewrites
+	ch <- metricVerifyErrorsCorrectedByEccFast
+	ch <- metricVerifyErrorsCorrectedByEccDelayed
+	ch <- metricVerifyTotalUncorrectedErrors
 }
 
 // Collect is called by the Prometheus registry when collecting metrics.
@@ -103,6 +109,13 @@ func (i *SMARTctlManagerCollector) Collect(ch chan<- prometheus.Metric) {
 	i.mutex.Lock()
 	refreshAllDevices(i.logger, i.Devices)
 	for _, device := range i.Devices {
+		if ok, found := deviceScrapeOk.Load(device); found {
+			success := 0.0
+			if ok.(bool) {
+				success = 1
+			}
+			ch <- prometheus.MustNewConstMetric(metricDeviceScrapeSuccess, prometheus.GaugeValue, success, device.Label)
+		}
 		json := readData(i.logger, device)
 		if json.Exists() {
 			info.SetJSON(json)
@@ -138,6 +151,9 @@ var (
 	smartctlInterval = kingpin.Flag("smartctl.interval",
 		"The interval between smartctl polls",
 	).Default("60s").Duration()
+	smartctlTimeout = kingpin.Flag("smartctl.timeout",
+		"Timeout for each smartctl invocation. A device that exceeds it is skipped. 0 disables the timeout",
+	).Default("0s").Duration()
 	smartctlRescanInterval = kingpin.Flag("smartctl.rescan",
 		"The interval between rescanning for new/disappeared devices. If the interval is smaller than 1s no rescanning takes place. If any devices are configured with smartctl.device also no rescanning takes place.",
 	).Default("10m").Duration()
