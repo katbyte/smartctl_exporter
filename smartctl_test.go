@@ -16,6 +16,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -240,7 +241,7 @@ func TestMineDeviceSelfTestLog(t *testing.T) {
 
 			// Create collector and mine data
 			ch := make(chan prometheus.Metric, 20)
-			smart := NewSMARTctl(nil, jsonData, ch)
+			smart := NewSMARTctl(slog.New(slog.DiscardHandler), jsonData, ch, Device{Name: deviceName, Label: deviceName})
 			smart.mineDeviceSelfTestLog()
 			close(ch)
 
