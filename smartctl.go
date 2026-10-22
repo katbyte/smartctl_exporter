@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -117,6 +118,8 @@ func (smart *SMARTctl) Collect() {
 	if smart.device.interfaceType == "scsi" {
 		smart.mineSCSIUsedEnduranceIndicator()
 		smart.mineSCSIGrownDefectList()
+		smart.mineSCSILoadUnloadCycles()
+		smart.mineSCSISASPhys()
 		smart.mineSCSIErrorCounterLog()
 		smart.mineSCSIBytesRead()
 		smart.mineSCSIBytesWritten()
@@ -196,7 +199,6 @@ func (smart *SMARTctl) mineBlockSize() {
 }
 
 func (smart *SMARTctl) mineInterfaceSpeed() {
-	// TODO: Support scsi_sas_port_[01].phy_N.negotiated_logical_link_rate
 	iSpeed := smart.json.Get("interface_speed")
 	if iSpeed.Exists() {
 		for _, speedType := range []string{"max", "current"} {
@@ -758,4 +760,66 @@ func (smart *SMARTctl) mineSCSIErrorCounterLog() {
 			smart.device.device,
 		)
 	}
+}
+
+// mineSCSILoadUnloadCycles sends how many times the disk has parked and unparked its heads, one of the counts a disk is rated for.
+func (smart *SMARTctl) mineSCSILoadUnloadCycles() {
+	value := smart.json.Get("scsi_start_stop_cycle_counter.accumulated_load_unload_cycles")
+	if !value.Exists() {
+		return
+	}
+
+	smart.ch <- prometheus.MustNewConstMetric(metricSCSILoadUnloadCycles, prometheus.CounterValue, value.Float(), smart.device.device)
+}
+
+// sasLinkRate is the speed in smartctl's "phy enabled; 12 Gbps". Anything without one, such as "phy enabled; unknown", is a phy with no link.
+var sasLinkRate = regexp.MustCompile(`([0-9.]+) Gbps`)
+
+// sasPhyErrors are the four error counts a SAS phy keeps, by smartctl's name and the name sas-exporter gives the same count.
+var sasPhyErrors = [][2]string{{"invalid_dword_count", "invalid_dword"}, {"running_disparity_error_count", "running_disparity"}, {"loss_of_dword_synchronization_count", "loss_of_dword_sync"}, {"phy_reset_problem_count", "phy_reset_problem"}}
+
+// mineSCSISASPhys sends, for each phy on each of a SAS disk's ports, what it is linked to, its link speed and the errors the disk has counted on that link.
+// smartctl only has these when asked for the sasphy log.
+func (smart *SMARTctl) mineSCSISASPhys() {
+	smart.json.ForEach(func(key, port gjson.Result) bool {
+		portNumber, isPort := strings.CutPrefix(key.String(), "scsi_sas_port_")
+		if !isPort {
+			return true
+		}
+
+		port.ForEach(func(key, phy gjson.Result) bool {
+			phyNumber, isPhy := strings.CutPrefix(key.String(), "phy_")
+			if !isPhy {
+				return true
+			}
+			if id := phy.Get("identifier"); id.Exists() {
+				phyNumber = id.String()
+			}
+
+			smart.ch <- prometheus.MustNewConstMetric(metricSCSISASPhyInfo, prometheus.GaugeValue, 1, smart.device.device, portNumber, phyNumber, sasAddress(phy.Get("sas_address").String()), sasAddress(phy.Get("attached_sas_address").String()), phy.Get("attached_device_type").String())
+
+			if rate := phy.Get("negotiated_logical_link_rate"); rate.Exists() {
+				gigabits := 0.0
+				if match := sasLinkRate.FindStringSubmatch(rate.String()); match != nil {
+					gigabits, _ = strconv.ParseFloat(match[1], 64)
+				}
+				smart.ch <- prometheus.MustNewConstMetric(metricSCSISASPhyLinkRateGigabits, prometheus.GaugeValue, gigabits, smart.device.device, portNumber, phyNumber)
+			}
+
+			for _, names := range sasPhyErrors {
+				if count := phy.Get(names[0]); count.Exists() {
+					smart.ch <- prometheus.MustNewConstMetric(metricSCSISASPhyErrors, prometheus.CounterValue, count.Float(), smart.device.device, portNumber, phyNumber, names[1])
+				}
+			}
+
+			return true
+		})
+
+		return true
+	})
+}
+
+// sasAddress writes a SAS address the way sas-exporter does, lowercase hex with no 0x, so the two join on it.
+func sasAddress(address string) string {
+	return strings.TrimPrefix(strings.ToLower(address), "0x")
 }

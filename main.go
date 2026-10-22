@@ -89,6 +89,10 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricDeviceERCSeconds
 	ch <- metricSCSIGrownDefectList
 	ch <- metricSCSIUsedEnduranceIndicator
+	ch <- metricSCSILoadUnloadCycles
+	ch <- metricSCSISASPhyInfo
+	ch <- metricSCSISASPhyLinkRateGigabits
+	ch <- metricSCSISASPhyErrors
 	ch <- metricReadErrorsCorrectedByRereadsRewrites
 	ch <- metricReadErrorsCorrectedByEccFast
 	ch <- metricReadErrorsCorrectedByEccDelayed
