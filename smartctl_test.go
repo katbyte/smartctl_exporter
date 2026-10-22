@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -365,5 +366,67 @@ func TestReadSMARTctlStandbyKeepsCache(t *testing.T) {
 	readOnce(device)
 	if _, cached := jsonCache.Load(device); !cached {
 		t.Error("standby must not drop cached data")
+	}
+}
+
+// nvmeReadings runs the collector over one saved smartctl answer and returns the NVMe health readings this file checks, by name.
+// Temperatures are keyed by their temperature_type, and only the drive's own sensors are kept.
+func nvmeReadings(t *testing.T, file string) map[string]float64 {
+	t.Helper()
+	data, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ch := make(chan prometheus.Metric, 1000)
+	smart := NewSMARTctl(slog.New(slog.DiscardHandler), parseJSON(string(data)), ch, Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"})
+	smart.Collect()
+	close(ch)
+
+	names := map[*prometheus.Desc]string{metricDeviceUnsafeShutdowns: "unsafe_shutdowns", metricDeviceControllerBusyTimeSeconds: "controller_busy_time_seconds", metricDeviceWarningTemperatureTimeSeconds: "warning_temperature_time_seconds", metricDeviceCriticalTemperatureTimeSeconds: "critical_temperature_time_seconds", metricDeviceHostReadCommands: "host_read_commands", metricDeviceHostWriteCommands: "host_write_commands", metricDeviceTemperature: "temperature"}
+	got := map[string]float64{}
+	for m := range ch {
+		name, ok := names[m.Desc()]
+		if !ok {
+			continue
+		}
+
+		var pb io_prometheus_client.Metric
+		if err := m.Write(&pb); err != nil {
+			t.Fatal(err)
+		}
+
+		for _, label := range pb.GetLabel() {
+			if label.GetName() == "temperature_type" {
+				name += "/" + label.GetValue()
+			}
+		}
+		if name == "temperature" || (strings.HasPrefix(name, "temperature/") && !strings.HasPrefix(name, "temperature/sensor_")) {
+			continue
+		}
+
+		got[name] = pb.GetCounter().GetValue() + pb.GetGauge().GetValue()
+	}
+
+	return got
+}
+
+func TestMineNvmeHealthReadings(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		want map[string]float64
+	}{
+		{"every field and four sensors", "testdata/nvme-null-HUSMR7632BHP301-nvme0.json", map[string]float64{"unsafe_shutdowns": 29, "controller_busy_time_seconds": 1184621 * 60, "warning_temperature_time_seconds": 0, "critical_temperature_time_seconds": 0, "host_read_commands": 9757701763, "host_write_commands": 40892765082, "temperature/sensor_1": 40, "temperature/sensor_2": 32, "temperature/sensor_3": 36, "temperature/sensor_4": 38}},
+		// This drive reports no time over temperature and no sensors of its own, so those readings are left off rather than shown as 0.
+		{"fields the drive does not report", "testdata/nvme-null-INTEL_MEMPEK1W032GA-nvme0.json", map[string]float64{"unsafe_shutdowns": 173, "controller_busy_time_seconds": 0, "host_read_commands": 26487271, "host_write_commands": 210021083}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := nvmeReadings(t, tt.file); !maps.Equal(got, tt.want) {
+				t.Errorf("got %v\nwant %v", got, tt.want)
+			}
+		})
 	}
 }
