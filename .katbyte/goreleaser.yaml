@@ -1,6 +1,6 @@
 version: 2
 
-# katbyte's release of the exporter: the programs, the ghcr.io image and the release page, built from a v*-katbyte.* tag on master.
+# katbyte's release of the exporter: the programs, the ghcr.io image and the release page, built from a v*-kt.* tag on master.
 # upstream's own release (promu and .promu.yml) is left as it is and not used on this fork.
 project_name: smartctl_exporter
 
@@ -29,7 +29,7 @@ archives:
   - formats: [tar.gz]
 
 # multi-arch image pushed to ghcr.io on release (needs docker login + buildx in the workflow).
-# every tag here reads as a test version (v0.15.0-katbyte.1), so latest always follows the newest release rather than skipping test versions
+# every tag here reads as a test version (v0.15.0-kt.1), so latest always follows the newest release rather than skipping test versions
 dockers_v2:
   - images:
       - ghcr.io/katbyte/smartctl_exporter

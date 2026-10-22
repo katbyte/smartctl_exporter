@@ -1,15 +1,15 @@
 ---
-# katbyte's release: a v*-katbyte.* tag on master builds the programs, publishes the release page and the ghcr.io image, then updates the Homebrew formula.
-# upstream's tags never start it, because they have no -katbyte. part
+# katbyte's release: a v*-kt.* tag on master builds the programs, publishes the release page and the ghcr.io image, then updates the Homebrew formula.
+# upstream's tags never start it, because they have no -kt. part
 name: katbyte release
 on:
   push:
-    tags: ['v*-katbyte.*']
+    tags: ['v*-kt.*']
   # the tap formula is built from a tag's source tarball, not from the checkout, so it can be regenerated for any existing tag without a new release
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to publish the Homebrew formula for, e.g. v0.15.0-katbyte.1'
+        description: 'Existing tag to publish the Homebrew formula for, e.g. v0.15.0-kt.1'
         required: true
         type: string
 
