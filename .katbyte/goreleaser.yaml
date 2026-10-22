@@ -1,0 +1,57 @@
+version: 2
+
+# katbyte's release of the exporter: the programs, the ghcr.io image and the release page, built from a v*-katbyte.* tag on master.
+# upstream's own release (promu and .promu.yml) is left as it is and not used on this fork.
+project_name: smartctl_exporter
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # the same version details upstream's .promu.yml sets, so --version and smartctl_exporter_build_info name this release
+    ldflags:
+      - -s -w
+      - -X github.com/prometheus/common/version.Version={{ .Version }}
+      - -X github.com/prometheus/common/version.Revision={{ .FullCommit }}
+      - -X github.com/prometheus/common/version.Branch={{ .Branch }}
+      - -X github.com/prometheus/common/version.BuildUser=goreleaser
+      - -X github.com/prometheus/common/version.BuildDate={{ time "20060102-15:04:05" }}
+
+archives:
+  - formats: [tar.gz]
+
+# multi-arch image pushed to ghcr.io on release (needs docker login + buildx in the workflow).
+# every tag here reads as a test version (v0.15.0-katbyte.1), so latest always follows the newest release rather than skipping test versions
+dockers_v2:
+  - images:
+      - ghcr.io/katbyte/smartctl_exporter
+    dockerfile: .katbyte/Dockerfile
+    tags:
+      - '{{ .Tag }}'
+      - latest
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    annotations:
+      org.opencontainers.image.title: '{{ .ProjectName }}'
+      org.opencontainers.image.description: 'Disk health from smartctl as a Prometheus metrics page, katbyte build'
+      org.opencontainers.image.source: 'https://github.com/katbyte/smartctl_exporter'
+      org.opencontainers.image.version: '{{ .Version }}'
+      org.opencontainers.image.revision: '{{ .FullCommit }}'
+      org.opencontainers.image.licenses: 'Apache-2.0'
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  filters:
+    exclude:
+      - '^Bump '
