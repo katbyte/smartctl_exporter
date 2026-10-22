@@ -18,6 +18,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
+	"github.com/tidwall/gjson"
 )
 
 // Device
@@ -185,7 +187,15 @@ var (
 func scanDevices(logger *slog.Logger) []Device {
 	filter := newDeviceFilter(*smartctlDeviceExclude, *smartctlDeviceInclude)
 
-	json := readSMARTctlDevices(logger)
+	// On a Mac, diskutil names disks the way smartctl and people do (disk0); smartctl's own scan gives a long IOService path instead.
+	var json gjson.Result
+	if runtime.GOOS == "darwin" {
+		json = readDiskutilDevices(logger)
+	}
+	if !json.Get("devices.0").Exists() {
+		json = readSMARTctlDevices(logger)
+	}
+
 	scanDevices := json.Get("devices").Array()
 	var scanDeviceResult []Device
 	for _, d := range scanDevices {
