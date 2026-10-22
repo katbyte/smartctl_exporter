@@ -1,0 +1,27 @@
+---
+# upstream's Go tests, run here because upstream's CI workflow is switched off on this fork: it publishes to upstream's registries on every push to master.
+# the release workflow calls this too, so nothing is published from a commit that fails them
+name: katbyte tests
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test_go:
+    name: Go tests
+    runs-on: ubuntu-latest
+    container:
+      # the same builder image as upstream's ci.yml; bump it when upstream does
+      image: quay.io/prometheus/golang-builder:1.27-base
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prometheus/promci-setup@55bd31fe92710532260eb57c554f2697363285c5 # v0.2.2
+      - run: make GO_ONLY=1 SKIP_GOLANGCI_LINT=1
+      - run: git diff --exit-code
