@@ -36,7 +36,7 @@ type channelCollector struct {
 	metrics <-chan prometheus.Metric
 }
 
-func (c *channelCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *channelCollector) Describe(_ chan<- *prometheus.Desc) {
 	// No-op implementation since we're dealing with dynamic metrics from smartctl.
 }
 
