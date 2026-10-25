@@ -183,12 +183,18 @@ func (smart *SMARTctl) mineCapacity() {
 	}
 }
 
+// mineBlockSize sends the logical and physical block sizes, leaving off any the drive does not report rather than sending a zero.
 func (smart *SMARTctl) mineBlockSize() {
 	for _, blockType := range []string{"logical", "physical"} {
+		blockSize := smart.json.Get(fmt.Sprintf("%s_block_size", blockType))
+		if !blockSize.Exists() {
+			continue
+		}
+
 		smart.ch <- prometheus.MustNewConstMetric(
 			metricDeviceBlockSize,
 			prometheus.GaugeValue,
-			smart.json.Get(fmt.Sprintf("%s_block_size", blockType)).Float(),
+			blockSize.Float(),
 			smart.device.device,
 			blockType,
 		)
