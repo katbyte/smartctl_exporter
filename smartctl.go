@@ -111,6 +111,11 @@ func (smart *SMARTctl) Collect() {
 		smart.mineNvmeNumErrLogEntries()
 		smart.mineNvmeBytesRead()
 		smart.mineNvmeBytesWritten()
+		smart.mineNvmeCounter(metricDeviceControllerBusyTimeSeconds, "controller_busy_time", 60)
+		smart.mineNvmeCounter(metricDeviceHostReadCommands, "host_reads", 1)
+		smart.mineNvmeCounter(metricDeviceHostWriteCommands, "host_writes", 1)
+		smart.mineNvmeTemperatureSensors()
+		smart.mineNvmeNamespaceUtilization()
 	}
 	// SCSI, SAS
 	if smart.device.interfaceType == "scsi" {
@@ -405,6 +410,41 @@ func (smart *SMARTctl) mineNvmeNumErrLogEntries() {
 //
 // Data Units Written: Contains the number of 512 byte data units the host has written to the ...
 // (the same as Data Units Read)
+
+// mineNvmeCounter sends one count from the NVMe health log, multiplied by scale; 60 turns the log's minutes into seconds.
+// A drive that does not report the field gets no reading rather than a zero.
+func (smart *SMARTctl) mineNvmeCounter(desc *prometheus.Desc, field string, scale float64) {
+	value := smart.json.Get("nvme_smart_health_information_log." + field)
+	if !value.Exists() {
+		return
+	}
+
+	smart.ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value.Float()*scale, smart.device.device)
+}
+
+// mineNvmeTemperatureSensors sends each of the drive's own temperature sensors as temperature_type="sensor_N", numbered from 1 as the NVMe spec does.
+// smartctl leaves a gap for a sensor the drive does not have, so a gap gets no reading rather than 0 degrees.
+func (smart *SMARTctl) mineNvmeTemperatureSensors() {
+	for i, value := range smart.json.Get("nvme_smart_health_information_log.temperature_sensors").Array() {
+		if value.Type != gjson.Number {
+			continue
+		}
+
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperature, prometheus.GaugeValue, value.Float(), smart.device.device, fmt.Sprintf("sensor_%d", i+1))
+	}
+}
+
+// mineNvmeNamespaceUtilization sends how many bytes of each namespace hold data, labelled with the namespace's number.
+func (smart *SMARTctl) mineNvmeNamespaceUtilization() {
+	for _, namespace := range smart.json.Get("nvme_namespaces").Array() {
+		utilization := namespace.Get("utilization.bytes")
+		if !utilization.Exists() {
+			continue
+		}
+
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceNamespaceUtilizationBytes, prometheus.GaugeValue, utilization.Float(), smart.device.device, namespace.Get("id").String())
+	}
+}
 
 func (smart *SMARTctl) mineNvmeBytesRead() {
 	value := smart.json.Get("nvme_smart_health_information_log.data_units_read")
