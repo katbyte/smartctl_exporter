@@ -689,7 +689,7 @@ func (smart *SMARTctl) mineSCSILoadUnloadCycles() {
 	smart.ch <- prometheus.MustNewConstMetric(metricSCSILoadUnloadCycles, prometheus.CounterValue, value.Float(), smart.device.device)
 }
 
-// sasLinkRate is the speed in smartctl's "phy enabled; 12 Gbps". Anything without one, such as "phy enabled; unknown", is a phy with no link.
+// sasLinkRate is the speed in smartctl's "phy enabled; 12 Gbps" (1.5, 3, 6, 12 or 22.5). Anything without one, such as "phy enabled; unknown", is a phy with no link.
 var sasLinkRate = regexp.MustCompile(`([0-9.]+) Gbps`)
 
 // sasPhyErrors are the four error counts a SAS phy keeps, by smartctl's name and the name sas-exporter gives the same count.
@@ -716,11 +716,12 @@ func (smart *SMARTctl) mineSCSISASPhys() {
 			smart.ch <- prometheus.MustNewConstMetric(metricSCSISASPhyInfo, prometheus.GaugeValue, 1, smart.device.device, portNumber, phyNumber, sasAddress(phy.Get("sas_address").String()), sasAddress(phy.Get("attached_sas_address").String()), phy.Get("attached_device_type").String())
 
 			if rate := phy.Get("negotiated_logical_link_rate"); rate.Exists() {
-				gigabits := 0.0
+				bitsPerSecond := 0.0
 				if match := sasLinkRate.FindStringSubmatch(rate.String()); match != nil {
-					gigabits, _ = strconv.ParseFloat(match[1], 64)
+					gigabits, _ := strconv.ParseFloat(match[1], 64)
+					bitsPerSecond = gigabits * 1e9
 				}
-				smart.ch <- prometheus.MustNewConstMetric(metricSCSISASPhyLinkRateGigabits, prometheus.GaugeValue, gigabits, smart.device.device, portNumber, phyNumber)
+				smart.ch <- prometheus.MustNewConstMetric(metricSCSISASPhyLinkRateBitsPerSecond, prometheus.GaugeValue, bitsPerSecond, smart.device.device, portNumber, phyNumber)
 			}
 
 			for _, names := range sasPhyErrors {

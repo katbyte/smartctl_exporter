@@ -59,7 +59,21 @@ def redact_data(data):
         #newval = str(f['v'])+str(f['k']) # for debugging
         newval = f['v']
         mutate_nested_dict(newdata, f['k'], newval, if_present=True)
+    redact_sas_addresses(newdata)
     return newdata
+
+def redact_sas_addresses(data):
+    # A SAS disk's phy addresses (from --log=sasphy) are its logical unit ID plus one or two, so they go with it.
+    # 0x0 means nothing is attached and stays, or a spare port would look used.
+    for port_key, port in data.items():
+        if not port_key.startswith('scsi_sas_port_') or not isinstance(port, dict):
+            continue
+        for phy_key, phy in port.items():
+            if not phy_key.startswith('phy_') or not isinstance(phy, dict):
+                continue
+            for k in ('sas_address', 'attached_sas_address'):
+                if k in phy and phy[k] != '0x0':
+                    phy[k] = REDACTED_HEX16_STR
 
 if __name__ == '__main__':
     main()
