@@ -308,10 +308,10 @@ var (
 	)
 
 	// A SAS disk's head parks and its own end of each link. sas-exporter and the like see the other end, so the two together tell a bad disk port from a bad slot or cable.
-	metricSCSILoadUnloadCycles       = prometheus.NewDesc("smartctl_scsi_load_unload_cycles", "Number of times the disk has parked and unparked its heads", []string{"device"}, nil)
-	metricSCSISASPhyInfo             = prometheus.NewDesc("smartctl_scsi_sas_phy_info", "Always 1. A phy on one of the disk's SAS ports, its address and what is on the other end of its link", []string{"device", "port", "phy", "sas_address", "attached_sas_address", "attached_device_type"}, nil)
-	metricSCSISASPhyLinkRateGigabits = prometheus.NewDesc("smartctl_scsi_sas_phy_link_rate_gigabits_per_second", "Speed the phy's link came up at: 12, 6, 3 or 1.5, or 0 with no link", []string{"device", "port", "phy"}, nil)
-	metricSCSISASPhyErrors           = prometheus.NewDesc("smartctl_scsi_sas_phy_errors_total", "Errors the disk has counted on the phy's link since it powered on", []string{"device", "port", "phy", "error"}, nil)
+	metricSCSILoadUnloadCycles            = prometheus.NewDesc("smartctl_scsi_load_unload_cycles", "Number of times the disk has parked and unparked its heads", []string{"device"}, nil)
+	metricSCSISASPhyInfo                  = prometheus.NewDesc("smartctl_scsi_sas_phy_info", "Always 1. A phy on one of the disk's SAS ports, its address and what is on the other end of its link", []string{"device", "port", "phy", "sas_address", "attached_sas_address", "attached_device_type"}, nil)
+	metricSCSISASPhyLinkRateBitsPerSecond = prometheus.NewDesc("smartctl_scsi_sas_phy_link_rate_bits_per_second", "Speed the phy's link came up at, in bits per second: 1.5, 3, 6, 12 or 22.5 Gbps, or 0 with no link", []string{"device", "port", "phy"}, nil)
+	metricSCSISASPhyErrors                = prometheus.NewDesc("smartctl_scsi_sas_phy_errors_total", "Errors the disk has counted on the phy's link since it powered on", []string{"device", "port", "phy", "error"}, nil)
 
 	metricSCSIUsedEnduranceIndicator = prometheus.NewDesc(
 		"smartctl_scsi_percentage_used_endurance_indicator",

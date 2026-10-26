@@ -37,7 +37,7 @@ func sasReadings(t *testing.T, file string, device Device) map[string]float64 {
 	smart.Collect()
 	close(ch)
 
-	names := map[*prometheus.Desc]string{metricSCSILoadUnloadCycles: "smartctl_scsi_load_unload_cycles", metricSCSISASPhyInfo: "smartctl_scsi_sas_phy_info", metricSCSISASPhyLinkRateGigabits: "smartctl_scsi_sas_phy_link_rate_gigabits_per_second", metricSCSISASPhyErrors: "smartctl_scsi_sas_phy_errors_total"}
+	names := map[*prometheus.Desc]string{metricSCSILoadUnloadCycles: "smartctl_scsi_load_unload_cycles", metricSCSISASPhyInfo: "smartctl_scsi_sas_phy_info", metricSCSISASPhyLinkRateBitsPerSecond: "smartctl_scsi_sas_phy_link_rate_bits_per_second", metricSCSISASPhyErrors: "smartctl_scsi_sas_phy_errors_total"}
 	got := map[string]float64{}
 	for m := range ch {
 		name, ok := names[m.Desc()]
@@ -72,8 +72,8 @@ func TestMineSCSISASReadings(t *testing.T) {
 			"smartctl_scsi_load_unload_cycles{device=sdb}": 1188,
 			"smartctl_scsi_sas_phy_info{attached_device_type=expander device,attached_sas_address=5003048000000003,device=sdb,phy=0,port=0,sas_address=5000cca000000001}": 1,
 			"smartctl_scsi_sas_phy_info{attached_device_type=no device attached,attached_sas_address=0,device=sdb,phy=1,port=1,sas_address=5000cca000000002}":             1,
-			"smartctl_scsi_sas_phy_link_rate_gigabits_per_second{device=sdb,phy=0,port=0}":                                                                                12,
-			"smartctl_scsi_sas_phy_link_rate_gigabits_per_second{device=sdb,phy=1,port=1}":                                                                                0,
+			"smartctl_scsi_sas_phy_link_rate_bits_per_second{device=sdb,phy=0,port=0}":                                                                                    12e9,
+			"smartctl_scsi_sas_phy_link_rate_bits_per_second{device=sdb,phy=1,port=1}":                                                                                    0,
 			"smartctl_scsi_sas_phy_errors_total{device=sdb,error=invalid_dword,phy=0,port=0}":                                                                             7,
 			"smartctl_scsi_sas_phy_errors_total{device=sdb,error=running_disparity,phy=0,port=0}":                                                                         5,
 			"smartctl_scsi_sas_phy_errors_total{device=sdb,error=loss_of_dword_sync,phy=0,port=0}":                                                                        2,
