@@ -1,0 +1,167 @@
+{
+	"device": {
+		"info_name": "disk0",
+		"name": "disk0",
+		"protocol": "NVMe",
+		"type": "nvme"
+	},
+	"endurance_used": {
+		"current_percent": 4
+	},
+	"firmware_version": "REDACTED",
+	"json_format_version": [
+		1,
+		0
+	],
+	"local_time": {
+		"asctime": "Fri Feb 13 23:31:30 2009 UTC",
+		"time_t": 1234567890
+	},
+	"model_name": "APPLE SSD AP1024R",
+	"nvme_controller_id": 0,
+	"nvme_firmware_update_capabilities": {
+		"activiation_without_reset": false,
+		"first_slot_is_read_only": false,
+		"multiple_update_detection": false,
+		"other": 0,
+		"slots": 1,
+		"value": 2
+	},
+	"nvme_ieee_oui_identifier": 0,
+	"nvme_log_page_attributes": {
+		"commands_effects_log": false,
+		"extended_get_log_page_cmd": false,
+		"other": 0,
+		"persistent_event_log": false,
+		"smart_health_per_namespace": false,
+		"supported_log_pages_log": false,
+		"telemetry_data_area_4": false,
+		"telemetry_log": false,
+		"value": 0
+	},
+	"nvme_maximum_data_transfer_pages": 256,
+	"nvme_number_of_namespaces": 3,
+	"nvme_optional_admin_commands": {
+		"command_and_feature_lockdown": false,
+		"directives": false,
+		"doorbell_buffer_config": false,
+		"firmware_download": true,
+		"format_nvm": false,
+		"get_lba_status": false,
+		"mi_send_receive": false,
+		"namespace_management": false,
+		"other": 0,
+		"security_send_receive": false,
+		"self_test": false,
+		"value": 4,
+		"virtualization_management": false
+	},
+	"nvme_optional_nvm_commands": {
+		"compare": false,
+		"copy": false,
+		"dataset_management": true,
+		"other": 0,
+		"reservations": false,
+		"save_select_feature_nonzero": false,
+		"timestamp": false,
+		"value": 4,
+		"verify": false,
+		"write_uncorrectable": false,
+		"write_zeroes": false
+	},
+	"nvme_pci_vendor": {
+		"id": 4203,
+		"subsystem_id": 4203
+	},
+	"nvme_power_states": [
+		{
+			"entry_latency_us": 0,
+			"exit_latency_us": 0,
+			"max_power": {
+				"scale": 2,
+				"units_per_watt": 100,
+				"value": 0
+			},
+			"non_operational_state": false,
+			"relative_read_latency": 0,
+			"relative_read_throughput": 0,
+			"relative_write_latency": 0,
+			"relative_write_throughput": 0
+		}
+	],
+	"nvme_smart_health_information_log": {
+		"available_spare": 100,
+		"available_spare_threshold": 99,
+		"controller_busy_time": 0,
+		"critical_warning": 0,
+		"data_units_read": 420876007,
+		"data_units_written": 179620833,
+		"host_reads": 13837023157,
+		"host_writes": 4427397616,
+		"media_errors": 0,
+		"nsid": -1,
+		"num_err_log_entries": 0,
+		"percentage_used": 4,
+		"power_cycles": 533,
+		"power_on_hours": 4761,
+		"temperature": 33,
+		"unsafe_shutdowns": 53
+	},
+	"nvme_version": {
+		"string": "<1.2",
+		"value": 0
+	},
+	"power_cycle_count": 533,
+	"power_on_time": {
+		"hours": 4761
+	},
+	"serial_number": "REDACTED",
+	"smart_status": {
+		"nvme": {
+			"value": 0
+		},
+		"passed": true
+	},
+	"smart_support": {
+		"available": true,
+		"enabled": true
+	},
+	"smartctl": {
+		"argv": [
+			"smartctl",
+			"--json",
+			"--info",
+			"--health",
+			"--attributes",
+			"--capabilities",
+			"--tolerance=verypermissive",
+			"--nocheck=standby",
+			"--format=brief",
+			"--log=error",
+			"--device=nvme",
+			"disk0"
+		],
+		"build_info": "REDACTED",
+		"exit_status": 4,
+		"messages": [
+			{
+				"severity": "error",
+				"string": "Read 1 entries from Error Information Log failed: GetLogPage failed: system=0x38, sub=0x0, code=745"
+			}
+		],
+		"platform_info": "REDACTED",
+		"pre_release": false,
+		"svn_revision": "5714",
+		"version": [
+			7,
+			5
+		]
+	},
+	"spare_available": {
+		"current_percent": 100,
+		"threshold_percent": 99
+	},
+	"temperature": {
+		"current": 33
+	}
+}

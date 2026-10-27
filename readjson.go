@@ -251,7 +251,16 @@ func jsonIsOk(logger *slog.Logger, json gjson.Result) bool {
 	if messages.Exists() {
 		for _, message := range messages.Array() {
 			if message.Get("severity").String() == "error" {
-				logger.Error(message.Get("string").String())
+				text := message.Get("string").String()
+
+				// A log smartctl was asked for could not be read ("Read 1 entries from Error Information Log failed: ...", "Read Self-test Log failed: ...").
+				// The health readings are still in the answer. Apple SSDs and some older drives have no error log at all, and were dropped for it.
+				if strings.HasPrefix(text, "Read ") && strings.Contains(text, "Log failed") {
+					logger.Warn("smartctl could not read one of the disk's logs, keeping the rest of its answer", "device", json.Get("device.name").String(), "msg", text)
+					continue
+				}
+
+				logger.Error(text)
 				return false
 			}
 		}
