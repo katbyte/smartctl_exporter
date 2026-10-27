@@ -138,6 +138,11 @@ var (
 		},
 		nil,
 	)
+
+	// Lifetime time at or above the drive's own warning and critical temperatures. Each is left off for a drive that does not report it.
+	metricDeviceWarningTemperatureTimeSeconds  = prometheus.NewDesc("smartctl_device_warning_temperature_time_seconds", "Time the controller has spent at or above its warning composite temperature threshold", []string{"device"}, nil)
+	metricDeviceCriticalTemperatureTimeSeconds = prometheus.NewDesc("smartctl_device_critical_temperature_time_seconds", "Time the controller has spent at or above its critical composite temperature threshold", []string{"device"}, nil)
+
 	metricDevicePowerCycleCount = prometheus.NewDesc(
 		"smartctl_device_power_cycle_count",
 		"Device power cycle count",
@@ -146,6 +151,10 @@ var (
 		},
 		nil,
 	)
+
+	// Power lost without a shutdown notice first. Left off for a drive that does not report it.
+	metricDeviceUnsafeShutdowns = prometheus.NewDesc("smartctl_device_unsafe_shutdowns", "Number of times the controller lost power without being told to shut down first", []string{"device"}, nil)
+
 	metricDevicePercentageUsed = prometheus.NewDesc(
 		"smartctl_device_percentage_used",
 		"Device write percentage used",

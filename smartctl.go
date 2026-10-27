@@ -107,6 +107,8 @@ func (smart *SMARTctl) Collect() {
 		smart.mineNvmeAvailableSpare()
 		smart.mineNvmeAvailableSpareThreshold()
 		smart.mineNvmeCriticalWarning()
+		smart.mineNvmeUnsafeShutdowns()
+		smart.mineNvmeTemperatureTime()
 		smart.mineNvmeMediaErrors()
 		smart.mineNvmeNumErrLogEntries()
 		smart.mineNvmeVolatileMemoryBackupFailed()
@@ -375,6 +377,36 @@ func (smart *SMARTctl) mineNvmeCriticalWarning() {
 		smart.json.Get("nvme_smart_health_information_log.critical_warning").Float(),
 		smart.device.device,
 	)
+}
+
+// mineNvmeUnsafeShutdowns sends how many times the drive lost power without a shutdown notice (CC.SHN) first, so a clean shutdown does not count.
+// A drive that does not report it gets no reading rather than a zero.
+func (smart *SMARTctl) mineNvmeUnsafeShutdowns() {
+	value := smart.json.Get("nvme_smart_health_information_log.unsafe_shutdowns")
+	if !value.Exists() {
+		return
+	}
+
+	smart.ch <- prometheus.MustNewConstMetric(metricDeviceUnsafeShutdowns, prometheus.CounterValue, value.Float(), smart.device.device)
+}
+
+// nvmeTemperatureTimes are the health log's two time-over-temperature fields, counted in minutes, and the readings they become.
+var nvmeTemperatureTimes = []struct {
+	field string
+	desc  *prometheus.Desc
+}{{"warning_temp_time", metricDeviceWarningTemperatureTimeSeconds}, {"critical_comp_time", metricDeviceCriticalTemperatureTimeSeconds}}
+
+// mineNvmeTemperatureTime sends how long the drive has run at or above its own warning and critical temperatures, in seconds.
+// A drive that does not report a field gets no reading rather than a zero.
+func (smart *SMARTctl) mineNvmeTemperatureTime() {
+	for _, reading := range nvmeTemperatureTimes {
+		value := smart.json.Get("nvme_smart_health_information_log." + reading.field)
+		if !value.Exists() {
+			continue
+		}
+
+		smart.ch <- prometheus.MustNewConstMetric(reading.desc, prometheus.CounterValue, value.Float()*60, smart.device.device)
+	}
 }
 
 func (smart *SMARTctl) mineNvmeMediaErrors() {

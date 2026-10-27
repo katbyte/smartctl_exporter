@@ -71,7 +71,10 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricDevicePowerOnSeconds
 	ch <- metricDeviceRotationRate
 	ch <- metricDeviceTemperature
+	ch <- metricDeviceWarningTemperatureTimeSeconds
+	ch <- metricDeviceCriticalTemperatureTimeSeconds
 	ch <- metricDevicePowerCycleCount
+	ch <- metricDeviceUnsafeShutdowns
 	ch <- metricDevicePercentageUsed
 	ch <- metricDeviceAvailableSpare
 	ch <- metricDeviceAvailableSpareThreshold
