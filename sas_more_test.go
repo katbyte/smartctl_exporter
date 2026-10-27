@@ -124,7 +124,7 @@ func TestMineSCSIMoreReadings(t *testing.T) {
 			"temperature{temperature_type=sensor_2_since_power_on_max}": 45,
 			"temperature{temperature_type=sensor_2_since_power_on_min}": 30,
 		}},
-		{"NVMe drive has none", "testdata/INTEL_MEMPEK1W032GA.json", Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"}, map[string]float64{}},
+		{"NVMe drive has none", "testdata/nvme-null-INTEL_MEMPEK1W032GA-nvme0.json", Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"}, map[string]float64{}},
 	}
 
 	for _, tt := range tests {
