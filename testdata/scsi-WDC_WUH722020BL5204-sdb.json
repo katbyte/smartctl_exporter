@@ -1,0 +1,258 @@
+{
+	"device": {
+		"info_name": "/dev/sdb",
+		"name": "/dev/sdb",
+		"protocol": "SCSI",
+		"type": "scsi"
+	},
+	"device_type": {
+		"name": "disk",
+		"scsi_terminology": "Peripheral Device Type [PDT]",
+		"scsi_value": 0
+	},
+	"form_factor": {
+		"name": "3.5 inches",
+		"scsi_value": 2
+	},
+	"json_format_version": [
+		1,
+		0
+	],
+	"local_time": {
+		"asctime": "Fri Feb 13 23:31:30 2009 UTC",
+		"time_t": 1234567890
+	},
+	"logical_block_size": 512,
+	"logical_unit_id": "0x1234567890abcdef",
+	"physical_block_size": 4096,
+	"power_on_time": {
+		"hours": 26926,
+		"minutes": 7
+	},
+	"rotation_rate": 7200,
+	"scsi_background_scan": {
+		"status": {
+			"number_medium_scans_performed": 39,
+			"number_scans_performed": 39,
+			"scan_progress": "0.00%",
+			"string": "waiting until BMS interval timer expires",
+			"value": 8
+		}
+	},
+	"scsi_environmental_reports": {
+		"temperature_1": {
+			"current": 39,
+			"lifetime_maximum": 59,
+			"lifetime_minimum": 23,
+			"maximum_since_power_on": 49,
+			"minimum_since_power_on": 27,
+			"parameter_code": 0
+		}
+	},
+	"scsi_error_counter_log": {
+		"read": {
+			"correction_algorithm_invocations": 407707,
+			"errors_corrected_by_eccdelayed": 12,
+			"errors_corrected_by_eccfast": 0,
+			"errors_corrected_by_rereads_rewrites": 0,
+			"gigabytes_processed": "437472.862",
+			"total_errors_corrected": 12,
+			"total_uncorrected_errors": 0
+		},
+		"verify": {
+			"correction_algorithm_invocations": 2042,
+			"errors_corrected_by_eccdelayed": 0,
+			"errors_corrected_by_eccfast": 0,
+			"errors_corrected_by_rereads_rewrites": 0,
+			"gigabytes_processed": "0.000",
+			"total_errors_corrected": 0,
+			"total_uncorrected_errors": 0
+		},
+		"write": {
+			"correction_algorithm_invocations": 52689,
+			"errors_corrected_by_eccdelayed": 1,
+			"errors_corrected_by_eccfast": 0,
+			"errors_corrected_by_rereads_rewrites": 0,
+			"gigabytes_processed": "102019.648",
+			"total_errors_corrected": 1,
+			"total_uncorrected_errors": 0
+		}
+	},
+	"scsi_extended_self_test_seconds": 132060,
+	"scsi_general_statistics_and_performance_log": {
+		"general_access": {
+			"number_of_logical_blocks_received": 199257124648,
+			"number_of_logical_blocks_transmitted": 854439183625,
+			"number_of_read_commands": 4190301740,
+			"number_of_write_commands": 1440645205,
+			"read_command_processing_intervals": 0,
+			"weighted_number_of_read_commands_plus_write_commands": 0,
+			"weighted_read_command_processing_plus_write_command_processing": 0,
+			"write_command_processing_intervals": 0
+		},
+		"idle_time": {
+			"idle_time_intervals": 1313856651
+		},
+		"time_interval": {
+			"exponent": 2,
+			"integer": 5
+		}
+	},
+	"scsi_grown_defect_list": 0,
+	"scsi_lb_provisioning": {
+		"management_enabled": {
+			"name": "LBPME",
+			"value": 0
+		},
+		"name": "fully provisioned",
+		"read_zeros": {
+			"name": "LBPRZ",
+			"value": 0
+		},
+		"value": 0
+	},
+	"scsi_model_name": "WDC WUH722020BL5204",
+	"scsi_product": "WUH722020BL5204",
+	"scsi_revision": "C54K",
+	"scsi_sas_port_0": {
+		"generation_code": 2,
+		"number_of_phys": 1,
+		"phy_0": {
+			"attached_device_type": "expander device",
+			"attached_initiator_port": {
+				"ssp_stp_smp": "000"
+			},
+			"attached_phy_identifier": 0,
+			"attached_reason": "SMP phy control function",
+			"attached_sas_address": "0x5003048000000003",
+			"attached_target_port": {
+				"ssp_stp_smp": "001"
+			},
+			"identifier": 0,
+			"invalid_dword_count": 7,
+			"loss_of_dword_synchronization_count": 2,
+			"negotiated_logical_link_rate": "phy enabled; 12 Gbps",
+			"phy_reset_problem_count": 1,
+			"reason": "unknown",
+			"running_disparity_error_count": 5,
+			"sas_address": "0x5000CCA000000001"
+		},
+		"relative_target_port_id": 1
+	},
+	"scsi_sas_port_1": {
+		"generation_code": 2,
+		"number_of_phys": 1,
+		"phy_0": {
+			"attached_device_type": "no device attached",
+			"attached_initiator_port": {
+				"ssp_stp_smp": "000"
+			},
+			"attached_phy_identifier": 0,
+			"attached_reason": "unknown",
+			"attached_sas_address": "0x0",
+			"attached_target_port": {
+				"ssp_stp_smp": "000"
+			},
+			"identifier": 1,
+			"invalid_dword_count": 0,
+			"loss_of_dword_synchronization_count": 0,
+			"negotiated_logical_link_rate": "phy enabled; unknown",
+			"phy_reset_problem_count": 0,
+			"reason": "power on",
+			"running_disparity_error_count": 0,
+			"sas_address": "0x5000cca000000002"
+		},
+		"relative_target_port_id": 2
+	},
+	"scsi_self_test_0": {
+		"code": {
+			"string": "Background short",
+			"value": 1
+		},
+		"power_on_time": {
+			"aka": "accumulated_power_on_hours",
+			"hours": 26571
+		},
+		"result": {
+			"string": "Completed",
+			"value": 0
+		}
+	},
+	"scsi_self_test_1": {
+		"code": {
+			"string": "Background long",
+			"value": 2
+		},
+		"power_on_time": {
+			"aka": "accumulated_power_on_hours",
+			"hours": 26453
+		},
+		"result": {
+			"string": "Aborted (device reset ?)",
+			"value": 2
+		}
+	},
+	"scsi_self_test_2": {
+		"code": {
+			"string": "Background short",
+			"value": 1
+		},
+		"power_on_time": {
+			"aka": "accumulated_power_on_hours",
+			"hours": 25856
+		},
+		"result": {
+			"string": "Completed",
+			"value": 0
+		}
+	},
+	"scsi_start_stop_cycle_counter": {
+		"accumulated_load_unload_cycles": 1188,
+		"accumulated_start_stop_cycles": 95,
+		"specified_cycle_count_over_device_lifetime": 50000,
+		"specified_load_unload_count_over_device_lifetime": 600000,
+		"week_of_manufacture": "02",
+		"year_of_manufacture": "2023"
+	},
+	"scsi_transport_protocol": {
+		"name": "SAS (SPL-4)",
+		"value": 6
+	},
+	"scsi_vendor": "WDC",
+	"scsi_version": "SPC-5",
+	"seagate_farm_log": {
+		"supported": false
+	},
+	"serial_number": "REDACTED",
+	"smart_status": {
+		"passed": true
+	},
+	"smart_support": {
+		"available": true,
+		"enabled": true
+	},
+	"smartctl": {
+		"argv": [
+			"smartctl",
+			"--json",
+			"-x",
+			"/dev/sdb"
+		],
+		"build_info": "REDACTED",
+		"exit_status": 0,
+		"platform_info": "REDACTED",
+		"pre_release": false,
+		"svn_revision": "5530",
+		"version": [
+			7,
+			4
+		]
+	},
+	"temperature_warning": {
+		"enabled": true
+	},
+	"user_capacity": {
+		"blocks": 39063650304,
+		"bytes": 20000588955648
+	}
+}
