@@ -105,6 +105,21 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricSCSISASPhyInfo
 	ch <- metricSCSISASPhyLinkRateBitsPerSecond
 	ch <- metricSCSISASPhyErrors
+	ch <- metricSCSIReadCommands
+	ch <- metricSCSIWriteCommands
+	ch <- metricSCSIRatedStartStopCycles
+	ch <- metricSCSIRatedLoadUnloadCycles
+	ch <- metricReadTotalErrorsCorrected
+	ch <- metricReadCorrectionAlgorithmInvocations
+	ch <- metricWriteTotalErrorsCorrected
+	ch <- metricWriteCorrectionAlgorithmInvocations
+	ch <- metricVerifyTotalErrorsCorrected
+	ch <- metricVerifyCorrectionAlgorithmInvocations
+	ch <- metricSCSIBackgroundScans
+	ch <- metricSCSIBackgroundMediumScans
+	ch <- metricSCSIBackgroundScanProgressRatio
+	ch <- metricSCSIBackgroundScanStatus
+	ch <- metricSCSIExtendedSelfTestSeconds
 	ch <- metricReadErrorsCorrectedByRereadsRewrites
 	ch <- metricReadErrorsCorrectedByEccFast
 	ch <- metricReadErrorsCorrectedByEccDelayed
