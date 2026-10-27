@@ -80,6 +80,10 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricDeviceNumErrLogEntries
 	ch <- metricDeviceBytesRead
 	ch <- metricDeviceBytesWritten
+	ch <- metricDeviceControllerBusyTimeSeconds
+	ch <- metricDeviceHostReadCommands
+	ch <- metricDeviceHostWriteCommands
+	ch <- metricDeviceNamespaceUtilizationBytes
 	ch <- metricDeviceSmartStatus
 	ch <- metricDeviceExitStatus
 	ch <- metricDeviceScrapeSuccess

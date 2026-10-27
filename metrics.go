@@ -218,6 +218,15 @@ var (
 		},
 		nil,
 	)
+
+	// More of the NVMe health log. Each is left off for a drive that does not report it.
+	metricDeviceControllerBusyTimeSeconds = prometheus.NewDesc("smartctl_device_controller_busy_time_seconds", "Time the controller has spent busy with I/O commands", []string{"device"}, nil)
+	metricDeviceHostReadCommands          = prometheus.NewDesc("smartctl_device_host_read_commands", "Number of read commands the controller has completed", []string{"device"}, nil)
+	metricDeviceHostWriteCommands         = prometheus.NewDesc("smartctl_device_host_write_commands", "Number of write commands the controller has completed", []string{"device"}, nil)
+
+	// How much of each NVMe namespace holds data. Many drives always count the whole namespace, so only some show real use.
+	metricDeviceNamespaceUtilizationBytes = prometheus.NewDesc("smartctl_device_nvme_namespace_utilization_bytes", "Bytes of the NVMe namespace the drive counts as holding data", []string{"device", "namespace_id"}, nil)
+
 	metricDeviceSmartStatus = prometheus.NewDesc(
 		"smartctl_device_smart_status",
 		"General smart status",
