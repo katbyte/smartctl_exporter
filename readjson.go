@@ -174,21 +174,19 @@ func jsonIsOk(logger *slog.Logger, json gjson.Result) bool {
 	if messages.Exists() {
 		for _, message := range messages.Array() {
 			if message.Get("severity").String() == "error" {
-				if isUnreadLog(message.Get("string").String()) {
-					logger.Warn("smartctl could not read one of the disk's logs, keeping the rest of its answer", "device", json.Get("device.name").String(), "msg", message.Get("string").String())
+				text := message.Get("string").String()
+
+				// A log smartctl was asked for could not be read ("Read 1 entries from Error Information Log failed: ...", "Read Self-test Log failed: ...").
+				// The health readings are still in the answer. Apple SSDs and some older drives have no error log at all, and were dropped for it.
+				if strings.HasPrefix(text, "Read ") && strings.Contains(text, "Log failed") {
+					logger.Warn("smartctl could not read one of the disk's logs, keeping the rest of its answer", "device", json.Get("device.name").String(), "msg", text)
 					continue
 				}
-				logger.Error(message.Get("string").String())
+
+				logger.Error(text)
 				return false
 			}
 		}
 	}
 	return true
-}
-
-// isUnreadLog tells whether an error message from smartctl only means a log it was asked for could not be read, such as
-// "Read 1 entries from Error Information Log failed: ..." or "Read Self-test Log failed: ...". The health readings are still in the answer.
-// Apple SSDs and some older drives have no error log at all, and were dropped for it.
-func isUnreadLog(message string) bool {
-	return strings.HasPrefix(message, "Read ") && strings.Contains(message, "Log failed")
 }
