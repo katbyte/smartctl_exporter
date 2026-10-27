@@ -64,7 +64,7 @@ func scsiMoreReadings(t *testing.T, answer string, device Device) map[string]flo
 
 		var labels []string
 		for _, label := range pb.GetLabel() {
-			if label.GetName() == "temperature_type" && !strings.Contains(label.GetValue(), "lifetime") && !strings.Contains(label.GetValue(), "since_power_on") && !strings.HasPrefix(label.GetValue(), "sensor_") {
+			if label.GetName() == "temperature_type" && label.GetValue() != "current" && !strings.Contains(label.GetValue(), "lifetime") && !strings.Contains(label.GetValue(), "since_power_on") && !strings.HasPrefix(label.GetValue(), "sensor_") {
 				name = "" // the temperature types that were already there
 			}
 			if label.GetName() != "device" {
@@ -94,8 +94,9 @@ func TestMineSCSIMoreReadings(t *testing.T) {
 	}{
 		// A WD Ultrastar SAS disk saved with -x, so every log is there.
 		{"SAS disk with every log", "testdata/scsi-WDC_WUH722020BL5204-sdb.json", Device{Name: "/dev/sdb", Type: "scsi", Label: "sdb"}, map[string]float64{
-			"read_commands{}":  4190301740,
-			"write_commands{}": 1440645205,
+			"read_commands{}":                                                         4190301740,
+			"write_commands{}":                                                        1440645205,
+			"temperature{temperature_type=current}":                                   39,
 			"temperature{temperature_type=lifetime_max}":                              59,
 			"temperature{temperature_type=lifetime_min}":                              23,
 			"temperature{temperature_type=since_power_on_max}":                        49,
@@ -115,6 +116,7 @@ func TestMineSCSIMoreReadings(t *testing.T) {
 			"extended_self_test_seconds{}":                                            132060,
 		}},
 		{"two temperature sensors", twoSensors, Device{Name: "/dev/sdz", Type: "scsi", Label: "sdz"}, map[string]float64{
+			"temperature{temperature_type=current}":                     30,
 			"temperature{temperature_type=lifetime_max}":                50,
 			"temperature{temperature_type=since_power_on_max}":          40,
 			"temperature{temperature_type=since_power_on_min}":          25,
@@ -124,7 +126,9 @@ func TestMineSCSIMoreReadings(t *testing.T) {
 			"temperature{temperature_type=sensor_2_since_power_on_max}": 45,
 			"temperature{temperature_type=sensor_2_since_power_on_min}": 30,
 		}},
-		{"NVMe drive has none", "testdata/nvme-null-INTEL_MEMPEK1W032GA-nvme0.json", Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"}, map[string]float64{}},
+		{"NVMe drive has none", "testdata/nvme-null-INTEL_MEMPEK1W032GA-nvme0.json", Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"}, map[string]float64{
+			"temperature{temperature_type=current}": 31,
+		}},
 	}
 
 	for _, tt := range tests {
