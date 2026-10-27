@@ -282,7 +282,13 @@ var (
 		},
 		nil,
 	)
-	metricSCSIGrownDefectList = prometheus.NewDesc(
+
+	// More of what a SATA disk keeps about itself: what has happened on its link, and how often it has run outside its temperature limits.
+	// Each is left off for a disk that does not report it.
+	metricDeviceSATAPhyEvents              = prometheus.NewDesc("smartctl_device_sata_phy_events_total", "Events the disk has counted on its SATA link since it powered on, by smartctl's name for each", []string{"device", "event"}, nil)
+	metricDeviceTemperatureOverLimitCount  = prometheus.NewDesc("smartctl_device_temperature_over_limit_count", "Number of times the disk has gone above its maximum operating temperature", []string{"device"}, nil)
+	metricDeviceTemperatureUnderLimitCount = prometheus.NewDesc("smartctl_device_temperature_under_limit_count", "Number of times the disk has gone below its minimum operating temperature", []string{"device"}, nil)
+	metricSCSIGrownDefectList              = prometheus.NewDesc(
 		"smartctl_scsi_grown_defect_list",
 		"Device SCSI grown defect list counter",
 		[]string{

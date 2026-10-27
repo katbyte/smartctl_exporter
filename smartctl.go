@@ -100,6 +100,8 @@ func (smart *SMARTctl) Collect() {
 	smart.mineDeviceErrorLog()
 	smart.mineDeviceSelfTestLog()
 	smart.mineDeviceERC()
+	smart.mineSATAPhyEvents()
+	smart.mineTemperatureLimitCounts()
 	smart.mineSmartStatus()
 
 	if smart.device.interfaceType == "nvme" || smart.device.protocol == "NVMe" {
@@ -279,6 +281,11 @@ func (smart *SMARTctl) mineTemperatures() {
 	// TODO: Implement scsi_environmental_reports
 	if temperatures.Exists() {
 		temperatures.ForEach(func(key, value gjson.Result) bool {
+			// Time over and under the limits, from the device statistics, is in minutes, and is sent with the rest of those statistics.
+			if strings.HasSuffix(key.String(), "_minutes") {
+				return true
+			}
+
 			smart.ch <- prometheus.MustNewConstMetric(
 				metricDeviceTemperature,
 				prometheus.GaugeValue,
@@ -489,10 +496,16 @@ func (smart *SMARTctl) mineDeviceStatistics() {
 			continue
 		}
 		for _, statistic := range page.Get("table").Array() {
+			// A statistic the disk does not keep has no value, and is left off rather than shown as 0.
+			value := statistic.Get("value")
+			if value.Type != gjson.Number {
+				continue
+			}
+
 			smart.ch <- prometheus.MustNewConstMetric(
 				metricDeviceStatistics,
 				prometheus.GaugeValue,
-				statistic.Get("value").Float(),
+				value.Float(),
 				smart.device.device,
 				table,
 				strings.TrimSpace(statistic.Get("name").String()),
@@ -572,6 +585,26 @@ func (smart *SMARTctl) mineDeviceERC() {
 			smart.device.device,
 			ercType,
 		)
+	}
+}
+
+// mineSATAPhyEvents sends the events the disk has counted on its SATA link, such as CRC errors and resets, by smartctl's name for each.
+// smartctl only has them when asked for the sataphy log.
+func (smart *SMARTctl) mineSATAPhyEvents() {
+	for _, event := range smart.json.Get("sata_phy_event_counters.table").Array() {
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceSATAPhyEvents, prometheus.CounterValue, event.Get("value").Float(), smart.device.device, event.Get("name").String())
+	}
+}
+
+// mineTemperatureLimitCounts sends how many times the disk has gone above its maximum and below its minimum operating temperature, from its
+// SCT status. smartctl only has that when asked for the scttempsts log.
+func (smart *SMARTctl) mineTemperatureLimitCounts() {
+	status := smart.json.Get("ata_sct_status.temperature")
+	if over := status.Get("over_limit_count"); over.Exists() {
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperatureOverLimitCount, prometheus.CounterValue, over.Float(), smart.device.device)
+	}
+	if under := status.Get("under_limit_count"); under.Exists() {
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperatureUnderLimitCount, prometheus.CounterValue, under.Float(), smart.device.device)
 	}
 }
 
