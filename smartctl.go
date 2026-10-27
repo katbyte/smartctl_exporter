@@ -158,19 +158,13 @@ func (smart *SMARTctl) mineDevice() {
 func (smart *SMARTctl) mineCapacity() {
 	// The user_capacity exists only when NVMe have single namespace. Otherwise,
 	// for NVMe devices with multiple namespaces, when device name used without
-	// namespace number (exporter case) user_capacity will be absent
-	smart.ch <- prometheus.MustNewConstMetric(
-		metricDeviceCapacityBlocks,
-		prometheus.GaugeValue,
-		smart.json.Get("user_capacity.blocks").Float(),
-		smart.device.device,
-	)
-	smart.ch <- prometheus.MustNewConstMetric(
-		metricDeviceCapacityBytes,
-		prometheus.GaugeValue,
-		smart.json.Get("user_capacity.bytes").Float(),
-		smart.device.device,
-	)
+	// namespace number (exporter case) user_capacity will be absent, and then
+	// the drive gets no capacity reading rather than a zero.
+	if capacity := smart.json.Get("user_capacity"); capacity.Exists() {
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceCapacityBlocks, prometheus.GaugeValue, capacity.Get("blocks").Float(), smart.device.device)
+		smart.ch <- prometheus.MustNewConstMetric(metricDeviceCapacityBytes, prometheus.GaugeValue, capacity.Get("bytes").Float(), smart.device.device)
+	}
+
 	nvmeTotalCapacity := smart.json.Get("nvme_total_capacity")
 	if nvmeTotalCapacity.Exists() {
 		smart.ch <- prometheus.MustNewConstMetric(
