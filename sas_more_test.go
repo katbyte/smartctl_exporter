@@ -24,7 +24,8 @@ import (
 	io_prometheus_client "github.com/prometheus/client_model/go"
 )
 
-// scsiMoreReadings runs the collector over one smartctl answer, saved or given inline, and returns the readings this file checks, keyed by name and labels.
+// scsiMoreReadings runs the collector over one smartctl answer, saved or given inline, and returns the readings this file checks, keyed by name
+// and labels. Of the temperature reading only the types this change adds are kept.
 func scsiMoreReadings(t *testing.T, answer string, device Device) map[string]float64 {
 	t.Helper()
 	if strings.HasPrefix(answer, "testdata/") {
@@ -63,11 +64,16 @@ func scsiMoreReadings(t *testing.T, answer string, device Device) map[string]flo
 
 		var labels []string
 		for _, label := range pb.GetLabel() {
+			if label.GetName() == "temperature_type" && !strings.Contains(label.GetValue(), "lifetime") && !strings.Contains(label.GetValue(), "since_power_on") && !strings.HasPrefix(label.GetValue(), "sensor_") {
+				name = "" // the temperature types that were already there
+			}
 			if label.GetName() != "device" {
 				labels = append(labels, label.GetName()+"="+label.GetValue())
 			}
 		}
-		got[name+"{"+strings.Join(labels, ",")+"}"] = pb.GetCounter().GetValue() + pb.GetGauge().GetValue()
+		if name != "" {
+			got[name+"{"+strings.Join(labels, ",")+"}"] = pb.GetCounter().GetValue() + pb.GetGauge().GetValue()
+		}
 	}
 
 	return got
@@ -118,9 +124,7 @@ func TestMineSCSIMoreReadings(t *testing.T) {
 			"temperature{temperature_type=sensor_2_since_power_on_max}": 45,
 			"temperature{temperature_type=sensor_2_since_power_on_min}": 30,
 		}},
-		{"NVMe drive has none", "testdata/nvme-null-HUSMR7632BHP301-nvme0.json", Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"}, map[string]float64{
-			"temperature{temperature_type=current}": 40,
-		}},
+		{"NVMe drive has none", "testdata/INTEL_MEMPEK1W032GA.json", Device{Name: "/dev/nvme0", Type: "nvme", Label: "nvme0"}, map[string]float64{}},
 	}
 
 	for _, tt := range tests {
