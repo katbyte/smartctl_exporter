@@ -774,9 +774,9 @@ func (smart *SMARTctl) mineSCSICommandCounts() {
 var scsiTemperatureExtremes = [][2]string{{"lifetime_maximum", "lifetime_max"}, {"lifetime_minimum", "lifetime_min"}, {"maximum_since_power_on", "since_power_on_max"}, {"minimum_since_power_on", "since_power_on_min"}}
 
 // mineSCSITemperatureExtremes sends each sensor's lifetime and since-power-on highs and lows as more types of the temperature reading.
-// The first sensor's current temperature is already sent as "current", so only a further sensor's is sent, as "sensor_N", and that sensor's
-// extremes carry the same prefix. smartctl writes an extreme the disk has not recorded as a word, and that is left off. It only has the
-// environmental report when asked for envrep.
+// Asked for the environmental report, smartctl prints it in place of the temperature page, so the first sensor's current temperature is sent
+// as "current" when the page's own is not there. A further sensor's is sent as "sensor_N", and that sensor's extremes carry the same prefix.
+// smartctl writes an extreme the disk has not recorded as a word, and that is left off.
 func (smart *SMARTctl) mineSCSITemperatureExtremes() {
 	smart.json.Get("scsi_environmental_reports").ForEach(func(key, sensor gjson.Result) bool {
 		number, isTemperature := strings.CutPrefix(key.String(), "temperature_")
@@ -787,9 +787,12 @@ func (smart *SMARTctl) mineSCSITemperatureExtremes() {
 		prefix := ""
 		if number != "1" {
 			prefix = "sensor_" + number + "_"
-			if current := sensor.Get("current"); current.Type == gjson.Number {
-				smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperature, prometheus.GaugeValue, current.Float(), smart.device.device, "sensor_"+number)
-			}
+		}
+		current := sensor.Get("current")
+		if number == "1" && !smart.json.Get("temperature.current").Exists() && current.Type == gjson.Number {
+			smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperature, prometheus.GaugeValue, current.Float(), smart.device.device, "current")
+		} else if number != "1" && current.Type == gjson.Number {
+			smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperature, prometheus.GaugeValue, current.Float(), smart.device.device, "sensor_"+number)
 		}
 		for _, names := range scsiTemperatureExtremes {
 			if value := sensor.Get(names[0]); value.Type == gjson.Number {
