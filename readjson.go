@@ -121,7 +121,7 @@ func scrapeFailed(device Device) {
 func readSMARTctl(logger *slog.Logger, device Device, wg *sync.WaitGroup) {
 	defer wg.Done()
 	start := time.Now()
-	var smartctlArgs = []string{"--json", "--info", "--health", "--attributes", "--capabilities", "--tolerance=verypermissive", "--nocheck=" + *smartctlPowerModeCheck, "--format=brief", "--log=error", "--log=selftest", "--log=sasphy", "--device=" + device.Type, device.Name}
+	var smartctlArgs = []string{"--json", "--info", "--health", "--attributes", "--capabilities", "--tolerance=verypermissive", "--nocheck=" + *smartctlPowerModeCheck, "--format=brief", "--log=error", "--log=selftest", "--log=sasphy", "--log=envrep", "--log=background", "--log=genstats", "--device=" + device.Type, device.Name}
 
 	logger.Debug("Calling smartctl with args", "args", strings.Join(smartctlArgs, " "))
 	out, err := runSmartctl(smartctlArgs, func() { inFlight.Delete(device) })
