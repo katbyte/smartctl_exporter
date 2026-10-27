@@ -119,6 +119,12 @@ func (smart *SMARTctl) Collect() {
 		smart.mineSCSIGrownDefectList()
 		smart.mineSCSILoadUnloadCycles()
 		smart.mineSCSISASPhys()
+		smart.mineSCSICommandCounts()
+		smart.mineSCSITemperatureExtremes()
+		smart.mineSCSIRatedCycles()
+		smart.mineSCSIErrorCorrections()
+		smart.mineSCSIBackgroundScan()
+		smart.mineSCSIExtendedSelfTestSeconds()
 		smart.mineSCSIErrorCounterLog()
 		smart.mineSCSIBytesRead()
 		smart.mineSCSIBytesWritten()
@@ -740,4 +746,95 @@ func (smart *SMARTctl) mineSCSISASPhys() {
 // sasAddress writes a SAS address the way sas-exporter does, lowercase hex with no 0x, so the two join on it.
 func sasAddress(address string) string {
 	return strings.TrimPrefix(strings.ToLower(address), "0x")
+}
+
+// scsiReading is one field of a smartctl answer and the reading it is sent as.
+type scsiReading struct {
+	field string
+	desc  *prometheus.Desc
+}
+
+// mineSCSIReadings sends each field found under the given part of the answer as its reading. A field the disk does not report is left off.
+func (smart *SMARTctl) mineSCSIReadings(path string, kind prometheus.ValueType, readings []scsiReading) {
+	for _, reading := range readings {
+		if value := smart.json.Get(path + "." + reading.field); value.Exists() {
+			smart.ch <- prometheus.MustNewConstMetric(reading.desc, kind, value.Float(), smart.device.device)
+		}
+	}
+}
+
+// mineSCSICommandCounts sends how many read and write commands the disk has completed, from its general statistics log. smartctl only has
+// that log when asked for genstats.
+func (smart *SMARTctl) mineSCSICommandCounts() {
+	smart.mineSCSIReadings("scsi_general_statistics_and_performance_log.general_access", prometheus.CounterValue, []scsiReading{{"number_of_read_commands", metricSCSIReadCommands}, {"number_of_write_commands", metricSCSIWriteCommands}})
+}
+
+// scsiTemperatureExtremes are the highs and lows a SAS disk keeps for each of its temperature sensors, by smartctl's name and the
+// temperature_type they are sent as.
+var scsiTemperatureExtremes = [][2]string{{"lifetime_maximum", "lifetime_max"}, {"lifetime_minimum", "lifetime_min"}, {"maximum_since_power_on", "since_power_on_max"}, {"minimum_since_power_on", "since_power_on_min"}}
+
+// mineSCSITemperatureExtremes sends each sensor's lifetime and since-power-on highs and lows as more types of the temperature reading.
+// The first sensor's current temperature is already sent as "current", so only a further sensor's is sent, as "sensor_N", and that sensor's
+// extremes carry the same prefix. smartctl writes an extreme the disk has not recorded as a word, and that is left off. It only has the
+// environmental report when asked for envrep.
+func (smart *SMARTctl) mineSCSITemperatureExtremes() {
+	smart.json.Get("scsi_environmental_reports").ForEach(func(key, sensor gjson.Result) bool {
+		number, isTemperature := strings.CutPrefix(key.String(), "temperature_")
+		if !isTemperature {
+			return true
+		}
+
+		prefix := ""
+		if number != "1" {
+			prefix = "sensor_" + number + "_"
+			if current := sensor.Get("current"); current.Type == gjson.Number {
+				smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperature, prometheus.GaugeValue, current.Float(), smart.device.device, "sensor_"+number)
+			}
+		}
+		for _, names := range scsiTemperatureExtremes {
+			if value := sensor.Get(names[0]); value.Type == gjson.Number {
+				smart.ch <- prometheus.MustNewConstMetric(metricDeviceTemperature, prometheus.GaugeValue, value.Float(), smart.device.device, prefix+names[1])
+			}
+		}
+
+		return true
+	})
+}
+
+// mineSCSIRatedCycles sends how many start/stop cycles and head parks the disk is rated for over its life, so the counts it has reached can be
+// read as a share of that.
+func (smart *SMARTctl) mineSCSIRatedCycles() {
+	smart.mineSCSIReadings("scsi_start_stop_cycle_counter", prometheus.GaugeValue, []scsiReading{{"specified_cycle_count_over_device_lifetime", metricSCSIRatedStartStopCycles}, {"specified_load_unload_count_over_device_lifetime", metricSCSIRatedLoadUnloadCycles}})
+}
+
+// mineSCSIErrorCorrections sends the two error counters per direction that mineSCSIErrorCounterLog leaves out: how many errors the disk
+// corrected in all, and how many times it ran its correction algorithm.
+func (smart *SMARTctl) mineSCSIErrorCorrections() {
+	smart.mineSCSIReadings("scsi_error_counter_log.read", prometheus.GaugeValue, []scsiReading{{"total_errors_corrected", metricReadTotalErrorsCorrected}, {"correction_algorithm_invocations", metricReadCorrectionAlgorithmInvocations}})
+	smart.mineSCSIReadings("scsi_error_counter_log.write", prometheus.GaugeValue, []scsiReading{{"total_errors_corrected", metricWriteTotalErrorsCorrected}, {"correction_algorithm_invocations", metricWriteCorrectionAlgorithmInvocations}})
+	smart.mineSCSIReadings("scsi_error_counter_log.verify", prometheus.GaugeValue, []scsiReading{{"total_errors_corrected", metricVerifyTotalErrorsCorrected}, {"correction_algorithm_invocations", metricVerifyCorrectionAlgorithmInvocations}})
+}
+
+// mineSCSIBackgroundScan sends how many background scans the disk has run on its own, how far the current one has got, and its status.
+// smartctl writes the progress as a percentage with a sign ("0.00%"), sent here as a ratio. It only has this log when asked for background.
+func (smart *SMARTctl) mineSCSIBackgroundScan() {
+	status := smart.json.Get("scsi_background_scan.status")
+	if !status.Exists() {
+		return
+	}
+
+	smart.mineSCSIReadings("scsi_background_scan.status", prometheus.CounterValue, []scsiReading{{"number_scans_performed", metricSCSIBackgroundScans}, {"number_medium_scans_performed", metricSCSIBackgroundMediumScans}})
+	if progress, err := strconv.ParseFloat(strings.TrimSuffix(status.Get("scan_progress").String(), "%"), 64); err == nil {
+		smart.ch <- prometheus.MustNewConstMetric(metricSCSIBackgroundScanProgressRatio, prometheus.GaugeValue, progress/100, smart.device.device)
+	}
+	if value := status.Get("value"); value.Exists() {
+		smart.ch <- prometheus.MustNewConstMetric(metricSCSIBackgroundScanStatus, prometheus.GaugeValue, value.Float(), smart.device.device, status.Get("string").String())
+	}
+}
+
+// mineSCSIExtendedSelfTestSeconds sends how long the disk says its long self-test takes.
+func (smart *SMARTctl) mineSCSIExtendedSelfTestSeconds() {
+	if value := smart.json.Get("scsi_extended_self_test_seconds"); value.Exists() {
+		smart.ch <- prometheus.MustNewConstMetric(metricSCSIExtendedSelfTestSeconds, prometheus.GaugeValue, value.Float(), smart.device.device)
+	}
 }

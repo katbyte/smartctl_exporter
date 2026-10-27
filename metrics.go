@@ -297,6 +297,24 @@ var (
 	metricSCSISASPhyLinkRateBitsPerSecond = prometheus.NewDesc("smartctl_scsi_sas_phy_link_rate_bits_per_second", "Speed the phy's link came up at, in bits per second: 1.5, 3, 6, 12 or 22.5 Gbps, or 0 with no link", []string{"device", "port", "phy"}, nil)
 	metricSCSISASPhyErrors                = prometheus.NewDesc("smartctl_scsi_sas_phy_errors_total", "Errors the disk has counted on the phy's link since it powered on", []string{"device", "port", "phy", "error"}, nil)
 
+	// More of what a SAS disk keeps about itself: how much work it has done, what it is rated for, the rest of its error counters, its background
+	// media scans and how long its long self-test takes. Each is left off for a disk that does not report it.
+	metricSCSIReadCommands                     = prometheus.NewDesc("smartctl_scsi_read_commands", "Number of read commands the disk has completed", []string{"device"}, nil)
+	metricSCSIWriteCommands                    = prometheus.NewDesc("smartctl_scsi_write_commands", "Number of write commands the disk has completed", []string{"device"}, nil)
+	metricSCSIRatedStartStopCycles             = prometheus.NewDesc("smartctl_scsi_rated_start_stop_cycles", "Number of start/stop cycles the disk is rated for over its life", []string{"device"}, nil)
+	metricSCSIRatedLoadUnloadCycles            = prometheus.NewDesc("smartctl_scsi_rated_load_unload_cycles", "Number of head parks the disk is rated for over its life", []string{"device"}, nil)
+	metricReadTotalErrorsCorrected             = prometheus.NewDesc("smartctl_read_total_errors_corrected", "Read Total Errors Corrected", []string{"device"}, nil)
+	metricReadCorrectionAlgorithmInvocations   = prometheus.NewDesc("smartctl_read_correction_algorithm_invocations", "Read Correction Algorithm Invocations", []string{"device"}, nil)
+	metricWriteTotalErrorsCorrected            = prometheus.NewDesc("smartctl_write_total_errors_corrected", "Write Total Errors Corrected", []string{"device"}, nil)
+	metricWriteCorrectionAlgorithmInvocations  = prometheus.NewDesc("smartctl_write_correction_algorithm_invocations", "Write Correction Algorithm Invocations", []string{"device"}, nil)
+	metricVerifyTotalErrorsCorrected           = prometheus.NewDesc("smartctl_verify_total_errors_corrected", "Verify Total Errors Corrected", []string{"device"}, nil)
+	metricVerifyCorrectionAlgorithmInvocations = prometheus.NewDesc("smartctl_verify_correction_algorithm_invocations", "Verify Correction Algorithm Invocations", []string{"device"}, nil)
+	metricSCSIBackgroundScans                  = prometheus.NewDesc("smartctl_scsi_background_scans", "Number of background scans the disk has run on its own", []string{"device"}, nil)
+	metricSCSIBackgroundMediumScans            = prometheus.NewDesc("smartctl_scsi_background_medium_scans", "Number of background medium scans the disk has run on its own", []string{"device"}, nil)
+	metricSCSIBackgroundScanProgressRatio      = prometheus.NewDesc("smartctl_scsi_background_scan_progress_ratio", "How far the current background scan has got, from 0 to 1", []string{"device"}, nil)
+	metricSCSIBackgroundScanStatus             = prometheus.NewDesc("smartctl_scsi_background_scan_status", "The disk's background scan status code, with its meaning as the status label", []string{"device", "status"}, nil)
+	metricSCSIExtendedSelfTestSeconds          = prometheus.NewDesc("smartctl_scsi_extended_self_test_seconds", "How long the disk says its long self-test takes", []string{"device"}, nil)
+
 	metricSCSIUsedEnduranceIndicator = prometheus.NewDesc(
 		"smartctl_scsi_percentage_used_endurance_indicator",
 		"Device SCSI percentage used endurance indicator",
