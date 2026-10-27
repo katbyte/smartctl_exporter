@@ -86,6 +86,9 @@ func (i *SMARTctlManagerCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricDeviceErrorLogCount
 	ch <- metricDeviceSelfTestLogCount
 	ch <- metricDeviceSelfTestLogErrorCount
+	ch <- metricDeviceLastSelfTest
+	ch <- metricDeviceLastSelfTestInfo
+	ch <- metricDeviceVolatileMemoryBackupFailed
 	ch <- metricDeviceERCSeconds
 	ch <- metricSCSIGrownDefectList
 	ch <- metricSCSIUsedEnduranceIndicator
