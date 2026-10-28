@@ -20,15 +20,20 @@ import (
 type deviceFilter struct {
 	ignorePattern *regexp.Regexp
 	acceptPattern *regexp.Regexp
+	modelPattern  *regexp.Regexp
 }
 
-func newDeviceFilter(ignoredPattern, acceptPattern string) (f deviceFilter) {
+func newDeviceFilter(ignoredPattern, acceptPattern, ignoredModelPattern string) (f deviceFilter) {
 	if ignoredPattern != "" {
 		f.ignorePattern = regexp.MustCompile(ignoredPattern)
 	}
 
 	if acceptPattern != "" {
 		f.acceptPattern = regexp.MustCompile(acceptPattern)
+	}
+
+	if ignoredModelPattern != "" {
+		f.modelPattern = regexp.MustCompile(ignoredModelPattern)
 	}
 
 	return
@@ -38,4 +43,9 @@ func newDeviceFilter(ignoredPattern, acceptPattern string) (f deviceFilter) {
 func (f *deviceFilter) ignored(name string) bool {
 	return ((f.ignorePattern != nil && f.ignorePattern.MatchString(name)) ||
 		(f.acceptPattern != nil && !f.acceptPattern.MatchString(name)))
+}
+
+// ignoredModel returns whether a device of this model should be ignored
+func (f *deviceFilter) ignoredModel(model string) bool {
+	return f.modelPattern != nil && f.modelPattern.MatchString(model)
 }
