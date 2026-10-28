@@ -151,7 +151,11 @@ var (
 	).Default("").String()
 	smartctlDeviceInclude = kingpin.Flag(
 		"smartctl.device-include",
-		"Regexp of devices to exclude from automatic scanning. (mutually exclusive to device-exclude)",
+		"Regexp of devices to include from automatic scanning. (mutually exclusive to device-exclude)",
+	).Default("").String()
+	smartctlDeviceExcludeModel = kingpin.Flag(
+		"smartctl.device-exclude-model",
+		"Regexp of models to exclude from automatic scanning, matched against the model smartctl reports (vendor and product for a SCSI device). '^QEMU ' leaves out a VM's virtual disks",
 	).Default("").String()
 	smartctlScanDeviceTypes = kingpin.Flag(
 		"smartctl.scan-device-type",
@@ -167,7 +171,7 @@ var (
 
 // scanDevices uses smartctl to gather the list of available devices.
 func scanDevices(logger *slog.Logger) []Device {
-	filter := newDeviceFilter(*smartctlDeviceExclude, *smartctlDeviceInclude)
+	filter := newDeviceFilter(*smartctlDeviceExclude, *smartctlDeviceInclude, *smartctlDeviceExcludeModel)
 
 	json := readSMARTctlDevices(logger)
 	scanDevices := json.Get("devices").Array()
@@ -194,7 +198,27 @@ func scanDevices(logger *slog.Logger) []Device {
 			scanDeviceResult = append(scanDeviceResult, device)
 		}
 	}
-	return scanDeviceResult
+	return withoutIgnoredModels(logger, filter, scanDeviceResult)
+}
+
+// withoutIgnoredModels leaves out the scanned devices whose model --smartctl.device-exclude-model names. The scan does not say what a device
+// is, so smartctl is asked who each one is, only when the flag is set. A VM's virtual disks answer every scan with nothing to report, under names
+// that move.
+func withoutIgnoredModels(logger *slog.Logger, filter deviceFilter, devices []Device) []Device {
+	if filter.modelPattern == nil {
+		return devices
+	}
+
+	var kept []Device
+	for _, device := range devices {
+		model := readDeviceModel(logger, device)
+		if filter.ignoredModel(model) {
+			logger.Info("Ignoring device", "name", device.Label, "model", model)
+			continue
+		}
+		kept = append(kept, device)
+	}
+	return kept
 }
 
 func buildDevicesFromFlag(devices []Device) []Device {
