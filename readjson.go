@@ -151,8 +151,8 @@ func readSMARTctl(logger *slog.Logger, device Device, wg *sync.WaitGroup) {
 // readDeviceModel asks smartctl only who a device is, and returns the model it reports: the model name of an ATA or NVMe device, the vendor and
 // product of a SCSI one. Empty when there was no answer, as from a disk left asleep.
 func readDeviceModel(logger *slog.Logger, device Device) string {
-	out, err := exec.Command(*smartctlPath, "--json", "--info", "--nocheck="+*smartctlPowerModeCheck, "--device="+device.Type, device.Name).Output()
-	if _, isExit := err.(*exec.ExitError); err != nil && !isExit {
+	out, err := runSmartctl([]string{"--json", "--info", "--nocheck=" + *smartctlPowerModeCheck, "--device=" + device.Type, device.Name}, nil)
+	if _, isExit := errors.AsType[*exec.ExitError](err); err != nil && !isExit {
 		logger.Warn("S.M.A.R.T. identity reading error", "err", err, "device", device)
 		return ""
 	}
