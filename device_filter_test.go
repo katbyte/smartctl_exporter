@@ -33,7 +33,7 @@ func TestDeviceFilter(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		filter := newDeviceFilter(test.ignore, test.accept)
+		filter := newDeviceFilter(test.ignore, test.accept, "")
 		result := filter.ignored(test.name)
 
 		if result != test.expectedResult {
